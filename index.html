@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pushup Penalty Calculator</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    >
+
+    <style>
+      /* Set default font */
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+
+      /* Custom styling for the radio button toggle */
+      input[type='radio']:checked + label {
+        background-color: #22d3ee; /* cyan-400 */
+        color: #1f2937; /* gray-800 */
+        font-weight: 600;
+        border-color: #22d3ee; /* cyan-400 */
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <!-- Main Calculator Card -->
+      <div class="bg-gray-800 p-6 md:p-8 rounded-2xl shadow-2xl">
+        <h1 class="text-3xl font-bold text-center mb-6 text-cyan-400">Pushup Penalty</h1>
+
+        <form id="pushupForm" class="space-y-5">
+          <!-- KDA Inputs -->
+          <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-5 sm:space-y-0">
+            <!-- Kills -->
+            <div class="flex-1 space-y-2">
+              <label for="kills" class="block text-sm font-medium text-gray-400">Kills (K)</label>
+              <input
+                type="number"
+                id="kills"
+                name="kills"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                class="w-full bg-gray-700 border-2 border-gray-600 rounded-lg px-4 py-3 text-white text-lg focus:outline-none focus:border-cyan-500 transition-colors"
+                placeholder="0"
+              >
+            </div>
+            <!-- Deaths -->
+            <div class="flex-1 space-y-2">
+              <label for="deaths" class="block text-sm font-medium text-gray-400">Deaths (D)</label>
+              <input
+                type="number"
+                id="deaths"
+                name="deaths"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                class="w-full bg-gray-700 border-2 border-gray-600 rounded-lg px-4 py-3 text-white text-lg focus:outline-none focus:border-cyan-500 transition-colors"
+                placeholder="0"
+              >
+            </div>
+            <!-- Assists -->
+            <div class="flex-1 space-y-2">
+              <label for="assists" class="block text-sm font-medium text-gray-400">Assists (A)</label>
+              <input
+                type="number"
+                id="assists"
+                name="assists"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                class="w-full bg-gray-700 border-2 border-gray-600 rounded-lg px-4 py-3 text-white text-lg focus:outline-none focus:border-cyan-500 transition-colors"
+                placeholder="0"
+              >
+            </div>
+          </div>
+
+          <!-- Champion Type & Game Time -->
+          <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-5 sm:space-y-0">
+            <!-- Champion Type -->
+            <div class="flex-1 space-y-2">
+              <label class="block text-sm font-medium text-gray-400">Champion Type (C)</label>
+              <div class="flex space-x-2 bg-gray-700 rounded-lg p-2">
+                <input type="radio" id="melee" name="champType" value="melee" class="sr-only" checked>
+                <label
+                  for="melee"
+                  class="flex-1 text-center px-4 py-2 rounded-md cursor-pointer text-gray-300 border-2 border-transparent transition-all"
+                >
+                  Melee (1.0x)
+                </label>
+
+                <input type="radio" id="ranged" name="champType" value="ranged" class="sr-only">
+                <label
+                  for="ranged"
+                  class="flex-1 text-center px-4 py-2 rounded-md cursor-pointer text-gray-300 border-2 border-transparent transition-all"
+                >
+                  Ranged (1.5x)
+                </label>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Result Display -->
+      <div
+        id="resultContainer"
+        class="text-center mt-6 p-6 bg-gray-800 rounded-2xl border-2 border-cyan-500 shadow-lg"
+        style="display: none;"
+      >
+        <p class="text-lg text-gray-400 mb-1">Pushups Owed:</p>
+        <h2 id="pushupResult" class="text-6xl font-extrabold text-cyan-400">0</h2>
+      </div>
+
+      <!-- Formula Explanation -->
+      <div class="mt-6 p-6 bg-gray-800 rounded-2xl border border-gray-600">
+        <h3 class="text-lg font-semibold text-cyan-400 mb-3">Formula Explanation</h3>
+        <div class="text-gray-300 space-y-2">
+          <p class="text-sm">
+            <strong>P = 3*D - (K + A/2)) * C</strong>
+          </p>
+          <div class="text-xs space-y-1">
+            <p><strong>P</strong> = Total pushups owed</p>
+            <p><strong>D</strong> = Deaths (each death costs 3 pushups)</p>
+            <p><strong>K</strong> = Kills (each kill reduces penalty by 1)</p>
+            <p><strong>A</strong> = Assists (each assist reduces penalty by 0.5)</p>
+            <p><strong>C</strong> = Champion multiplier (Melee: 1.0x, Ranged: 1.5x)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Get all the elements we need
+      const pushupForm = document.getElementById('pushupForm');
+      const killsInput = document.getElementById('kills');
+      const deathsInput = document.getElementById('deaths');
+      const assistsInput = document.getElementById('assists');
+      const gameTimeInput = document.getElementById('gameTime');
+      const resultContainer = document.getElementById('resultContainer');
+      const pushupResult = document.getElementById('pushupResult');
+
+      /**
+       * Calculates the pushup penalty based on the formula:
+       * P = max(0, (3*D - (K + A/2))) * C
+       */
+      function calculatePushups() {
+        // Get values from inputs, defaulting to 0 if empty
+        const kills = parseInt(killsInput.value) || 0;
+        const deaths = parseInt(deathsInput.value) || 0;
+        const assists = parseInt(assistsInput.value) || 0;
+
+        // Get champion type
+        const champType = document.querySelector('input[name="champType"]:checked').value;
+        const c_multiplier = champType === 'ranged' ? 1.5 : 1.0;
+
+        // --- Apply the formula ---
+
+        // 1. Calculate Core Penalty: (3*D - (K + A/2))
+        const death_penalty = 3;
+        const core_penalty_base = death_penalty * deaths - (kills + assists / 2);
+
+        // 2. Apply max(0, ...): Can't have negative pushups
+        const non_negative_core_penalty = Math.max(0, core_penalty_base);
+
+        // 3. Calculate Final Pushups: P = Core Penalty * C
+        const total_pushups_raw = non_negative_core_penalty * c_multiplier;
+
+        // 4. Round to the nearest whole number
+        let finalPushups = Math.round(total_pushups_raw);
+
+        // --- Update the UI ---
+        pushupResult.textContent = finalPushups;
+
+        // Show the result container if it's hidden
+        if (resultContainer.style.display === 'none') {
+          resultContainer.style.display = 'block';
+        }
+      }
+
+      // Add a single event listener to the form
+      // This will catch 'input' events from all fields inside it
+      pushupForm.addEventListener('input', calculatePushups);
+
+      // Run once on load to show 0 if all fields are empty
+      calculatePushups();
+    </script>
+  </body>
+</html>
