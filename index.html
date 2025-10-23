@@ -98,7 +98,7 @@
                   for="ranged"
                   class="flex-1 text-center px-4 py-2 rounded-md cursor-pointer text-gray-300 border-2 border-transparent transition-all"
                 >
-                  Ranged (1.5x)
+                  Ranged (1.25x)
                 </label>
               </div>
             </div>
@@ -121,14 +121,14 @@
         <h3 class="text-lg font-semibold text-cyan-400 mb-3">Formula Explanation</h3>
         <div class="text-gray-300 space-y-2">
           <p class="text-sm">
-            <strong>P = 3*D - (K + A/2)) * C</strong>
+            <strong>P = 3*D*R - (K*2+ A/2)</strong>
           </p>
           <div class="text-xs space-y-1">
             <p><strong>P</strong> = Total pushups owed</p>
             <p><strong>D</strong> = Deaths (each death costs 3 pushups)</p>
-            <p><strong>K</strong> = Kills (each kill reduces penalty by 1)</p>
+            <p><strong>K</strong> = Kills (each kill reduces penalty by 2)</p>
             <p><strong>A</strong> = Assists (each assist reduces penalty by 0.5)</p>
-            <p><strong>C</strong> = Champion multiplier (Melee: 1.0x, Ranged: 1.5x)</p>
+            <p><strong>R</strong> = Ranged multiplier (Melee: 1.0x, Ranged: 1.25x)</p>
           </div>
         </div>
       </div>
@@ -144,49 +144,35 @@
       const resultContainer = document.getElementById('resultContainer');
       const pushupResult = document.getElementById('pushupResult');
 
-      /**
-       * Calculates the pushup penalty based on the formula:
-       * P = max(0, (3*D - (K + A/2))) * C
-       */
       function calculatePushups() {
         // Get values from inputs, defaulting to 0 if empty
         const kills = parseInt(killsInput.value) || 0;
         const deaths = parseInt(deathsInput.value) || 0;
         const assists = parseInt(assistsInput.value) || 0;
 
-        // Get champion type
         const champType = document.querySelector('input[name="champType"]:checked').value;
-        const c_multiplier = champType === 'ranged' ? 1.5 : 1.0;
+        const range_multiplier = champType === 'ranged' ? 1.25 : 1.0;
 
         // --- Apply the formula ---
 
-        // 1. Calculate Core Penalty: (3*D - (K + A/2))
         const death_penalty = 3;
-        const core_penalty_base = death_penalty * deaths - (kills + assists / 2);
+        const core_penalty_base = death_penalty * deaths * range_multiplier - (kills * 2 + assists / 2);
 
-        // 2. Apply max(0, ...): Can't have negative pushups
         const non_negative_core_penalty = Math.max(0, core_penalty_base);
 
-        // 3. Calculate Final Pushups: P = Core Penalty * C
-        const total_pushups_raw = non_negative_core_penalty * c_multiplier;
+        const total_pushups_raw = non_negative_core_penalty;
 
-        // 4. Round to the nearest whole number
         let finalPushups = Math.round(total_pushups_raw);
 
-        // --- Update the UI ---
         pushupResult.textContent = finalPushups;
 
-        // Show the result container if it's hidden
         if (resultContainer.style.display === 'none') {
           resultContainer.style.display = 'block';
         }
       }
 
-      // Add a single event listener to the form
-      // This will catch 'input' events from all fields inside it
       pushupForm.addEventListener('input', calculatePushups);
 
-      // Run once on load to show 0 if all fields are empty
       calculatePushups();
     </script>
   </body>
