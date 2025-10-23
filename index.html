@@ -121,13 +121,13 @@
         <h3 class="text-lg font-semibold text-cyan-400 mb-3">Formula Explanation</h3>
         <div class="text-gray-300 space-y-2">
           <p class="text-sm">
-            <strong>P = 3*D*R - (K*2+ A/2)</strong>
+            <strong>P = 3*D*R - (K*2+ A/4)</strong>
           </p>
           <div class="text-xs space-y-1">
             <p><strong>P</strong> = Total pushups owed</p>
             <p><strong>D</strong> = Deaths (each death costs 3 pushups)</p>
             <p><strong>K</strong> = Kills (each kill reduces penalty by 2)</p>
-            <p><strong>A</strong> = Assists (each assist reduces penalty by 0.5)</p>
+            <p><strong>A</strong> = Assists (each assist reduces penalty by 0.25)</p>
             <p><strong>R</strong> = Ranged multiplier (Melee: 1.0x, Ranged: 1.25x)</p>
           </div>
         </div>
@@ -156,7 +156,7 @@
         // --- Apply the formula ---
 
         const death_penalty = 3;
-        const core_penalty_base = death_penalty * deaths * range_multiplier - (kills * 2 + assists / 2);
+        const core_penalty_base = death_penalty * deaths * range_multiplier - (kills * 2 + assists / 4);
 
         const non_negative_core_penalty = Math.max(0, core_penalty_base);
 
