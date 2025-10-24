@@ -1,3 +1,4 @@
+<!-- This is entire app is pretty much vibe coded. -->
 <!doctype html>
 <html lang="en">
   <head>
@@ -145,7 +146,7 @@
         <!-- Real-time Formula Display -->
         <div class="mb-6 p-4 bg-gray-700 rounded-lg border border-cyan-500/30">
           <h4 class="text-sm font-medium text-cyan-300 mb-3">Current Calculation:</h4>
-          <div class="lg:text-lg text-sm font-mono text-white space-y-2">
+          <div class="lg:text-lg sm:text-sm text-xs font-mono text-white space-y-2">
             <div class="flex items-center justify-center space-x-2">
               <span class="text-gray-400">P =</span>
               <span id="deathPenaltyDisplay" class="text-cyan-400">3</span>
@@ -184,27 +185,35 @@
           <div class="text-sm space-y-2">
             <div class="flex justify-between items-center">
               <span class="text-gray-400">Death penalty:</span>
-              <span id="deathPenaltyStep" class="text-white font-mono">3 × 0 × 1.0 = 0</span>
+              <span id="deathPenaltyStep" class="text-white font-mono"
+                >3 × 0 × 1.0 = <span class="text-red-400">0</span></span
+              >
             </div>
             <div class="flex justify-between items-center">
               <span class="text-gray-400">Kill reduction:</span>
-              <span id="killReductionStep" class="text-white font-mono">0 × 1.5 = 0</span>
+              <span id="killReductionStep" class="text-white font-mono"
+                >0 × 1.5 = <span class="text-green-400">0</span></span
+              >
             </div>
             <div class="flex justify-between items-center">
               <span class="text-gray-400">Assist reduction:</span>
-              <span id="assistReductionStep" class="text-white font-mono">0 ÷ 5 = 0</span>
+              <span id="assistReductionStep" class="text-white font-mono"
+                >0 ÷ 5 = <span class="text-green-400">0</span></span
+              >
             </div>
             <div class="border-t border-gray-600 pt-2 mt-2">
               <div class="flex justify-between items-center">
                 <span class="text-gray-400">Total reduction:</span>
-                <span id="totalReductionStep" class="text-white font-mono">0 + 0 = 0</span>
+                <span id="totalReductionStep" class="text-white font-mono"
+                  >0 + 0 = <span class="text-green-400">0</span></span
+                >
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-gray-400">Final penalty:</span>
                 <span
                   id="finalPenaltyStep"
                   class="text-cyan-300 font-mono font-semibold"
-                  >0 - 0 = 0</span
+                  >0 - 0 = <span class="text-red-400">0</span></span
                 >
               </div>
             </div>
@@ -302,7 +311,9 @@
           death_penalty * deaths * range_multiplier -
           (kills * CONFIG.KILL_REDUCTION_MULTIPLIER + assists / CONFIG.ASSIST_DIVISOR);
 
-        const non_negative_core_penalty = Math.max(0, core_penalty_base);
+        // Round to 2 decimal places to avoid floating-point precision issues
+        const rounded_penalty = Math.round(core_penalty_base * 100) / 100;
+        const non_negative_core_penalty = Math.max(0, rounded_penalty);
 
         const total_pushups_raw = non_negative_core_penalty;
 
@@ -326,28 +337,33 @@
         document.getElementById('rangeValue').textContent = range_multiplier;
 
         // Calculate step-by-step values using constants
-        const deathPenalty = CONFIG.DEATH_PENALTY_MULTIPLIER * deaths * range_multiplier;
-        const killReduction = kills * CONFIG.KILL_REDUCTION_MULTIPLIER;
-        const assistReduction = assists / CONFIG.ASSIST_DIVISOR;
-        const totalReduction = killReduction + assistReduction;
-        const finalPenalty = Math.max(0, deathPenalty - totalReduction);
+        const deathPenalty = Math.round(CONFIG.DEATH_PENALTY_MULTIPLIER * deaths * range_multiplier * 100) / 100;
+        const killReduction = Math.round(kills * CONFIG.KILL_REDUCTION_MULTIPLIER * 100) / 100;
+        const assistReduction = Math.round((assists / CONFIG.ASSIST_DIVISOR) * 100) / 100;
+        const totalReduction = Math.round((killReduction + assistReduction) * 100) / 100;
+        const finalPenalty = Math.max(0, Math.round((deathPenalty - totalReduction) * 100) / 100);
 
-        // Update step-by-step display using constants
+        // Update step-by-step display using constants with color coding
+        const deathPenaltyColor = deathPenalty > 0 ? 'text-red-400' : 'text-gray-400';
+        const killReductionColor = killReduction > 0 ? 'text-green-400' : 'text-gray-400';
+        const assistReductionColor = assistReduction > 0 ? 'text-green-400' : 'text-gray-400';
+        const totalReductionColor = totalReduction > 0 ? 'text-green-400' : 'text-gray-400';
+
         document.getElementById(
           'deathPenaltyStep'
-        ).textContent = `${CONFIG.DEATH_PENALTY_MULTIPLIER} × ${deaths} × ${range_multiplier} = ${deathPenalty}`;
+        ).innerHTML = `${CONFIG.DEATH_PENALTY_MULTIPLIER} × ${deaths} × ${range_multiplier} = <span class="${deathPenaltyColor}">${deathPenalty}</span>`;
         document.getElementById(
           'killReductionStep'
-        ).textContent = `${kills} × ${CONFIG.KILL_REDUCTION_MULTIPLIER} = ${killReduction}`;
+        ).innerHTML = `${kills} × ${CONFIG.KILL_REDUCTION_MULTIPLIER} = <span class="${killReductionColor}">${killReduction}</span>`;
         document.getElementById(
           'assistReductionStep'
-        ).textContent = `${assists} ÷ ${CONFIG.ASSIST_DIVISOR} = ${assistReduction}`;
+        ).innerHTML = `${assists} ÷ ${CONFIG.ASSIST_DIVISOR} = <span class="${assistReductionColor}">${assistReduction}</span>`;
         document.getElementById(
           'totalReductionStep'
-        ).textContent = `${killReduction} + ${assistReduction} = ${totalReduction}`;
+        ).innerHTML = `${killReduction} + ${assistReduction} = <span class="${totalReductionColor}">${totalReduction}</span>`;
         document.getElementById(
           'finalPenaltyStep'
-        ).textContent = `${deathPenalty} - ${totalReduction} = ${finalPenalty}`;
+        ).innerHTML = `${deathPenalty} - ${totalReduction} = <span>${finalPenalty}</span>`;
       }
 
       // Initialize dynamic values from constants
