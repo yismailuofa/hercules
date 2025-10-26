@@ -128,6 +128,15 @@
               </div>
             </div>
           </div>
+          <div class="flex items-center space-x-2 mt-2">
+            <input
+              type="checkbox"
+              id="supportCheckbox"
+              name="support"
+              class="form-checkbox h-5 w-5 text-cyan-500 focus:ring-cyan-400 border-gray-300 rounded"
+            >
+            <label for="supportCheckbox" class="text-sm text-gray-300 select-none cursor-pointer">Support</label>
+          </div>
         </form>
       </div>
 
@@ -159,6 +168,12 @@
               <span class="text-gray-400">×</span>
               <span
                 id="rangeValue"
+                class="bg-cyan-500/20 px-2 py-1 rounded text-cyan-300"
+                >1.0</span
+              >
+              <span class="text-gray-400">×</span>
+              <span
+                id="supportValue"
                 class="bg-cyan-500/20 px-2 py-1 rounded text-cyan-300"
                 >1.0</span
               >
@@ -223,13 +238,11 @@
         <!-- Variable explanations -->
         <div class="text-gray-300 space-y-2">
           <p class="text-sm">
-            <strong
-              >P = <span id="formulaDeathPenalty">3</span>*D*R - (K*<span
-                id="formulaKillMultiplier"
-                >1.5</span
-              >
-              + A/<span id="formulaAssistDivisor">5</span>)</strong
-            >
+            <strong>
+              P = <span id="formulaDeathPenalty">3</span>*D*R*S - (K*<span id="formulaKillMultiplier">1.5</span> + A/<span id="formulaAssistDivisor"
+                >5</span
+              >)<span id="supportInFormula"></span>
+            </strong>
           </p>
           <div class="text-xs space-y-1">
             <p><strong>P</strong> = Total pushups owed</p>
@@ -244,6 +257,7 @@
               <strong>R</strong> = Ranged multiplier (Melee: <span id="explanationMeleeMultiplier">1.0x</span>, Ranged:
               <span id="explanationRangedMultiplier">1.25x</span>)
             </p>
+            <p><strong>S</strong> = Support role. (Reduces penalty by 0.5)</p>
           </div>
         </div>
       </div>
@@ -273,7 +287,7 @@
         // Formula constants
         DEATH_PENALTY_MULTIPLIER: 3,
         KILL_REDUCTION_MULTIPLIER: 1.5,
-        ASSIST_DIVISOR: 5,
+        ASSIST_DIVISOR: 4,
 
         // Champion type multipliers
         CHAMPION_MULTIPLIERS: {
@@ -305,10 +319,15 @@
         const champType = document.querySelector('input[name="champType"]:checked').value;
         const range_multiplier = CONFIG.CHAMPION_MULTIPLIERS[champType];
 
+        // Support checkbox
+        const supportCheckbox = document.getElementById('supportCheckbox');
+        const supportChecked = supportCheckbox && supportCheckbox.checked;
+        const supportPenalty = supportChecked ? 0.5 : 1;
+
         // --- Apply the formula ---
         const death_penalty = CONFIG.DEATH_PENALTY_MULTIPLIER;
         const core_penalty_base =
-          death_penalty * deaths * range_multiplier -
+          death_penalty * deaths * range_multiplier * supportPenalty -
           (kills * CONFIG.KILL_REDUCTION_MULTIPLIER + assists / CONFIG.ASSIST_DIVISOR);
 
         // Round to 2 decimal places to avoid floating-point precision issues
@@ -326,15 +345,34 @@
         }
 
         // Update interactive formula display
-        updateInteractiveFormula(kills, deaths, assists, range_multiplier, finalPushups);
+        updateInteractiveFormula(
+          kills,
+          deaths,
+          assists,
+          range_multiplier,
+          finalPushups,
+          supportChecked,
+          non_negative_core_penalty
+        );
       }
 
-      function updateInteractiveFormula(kills, deaths, assists, range_multiplier, finalPushups) {
+      function updateInteractiveFormula(
+        kills,
+        deaths,
+        assists,
+        range_multiplier,
+        finalPushups,
+        supportChecked,
+        basePenalty
+      ) {
+        const supportFactor = supportChecked ? '0.5' : '1';
+
         // Update the main formula display
         document.getElementById('deathsValue').textContent = deaths;
         document.getElementById('killsValue').textContent = kills;
         document.getElementById('assistsValue').textContent = assists;
         document.getElementById('rangeValue').textContent = range_multiplier;
+        document.getElementById('supportValue').textContent = supportFactor;
 
         // Calculate step-by-step values using constants
         const deathPenalty = Math.round(CONFIG.DEATH_PENALTY_MULTIPLIER * deaths * range_multiplier * 100) / 100;
@@ -351,7 +389,7 @@
 
         document.getElementById(
           'deathPenaltyStep'
-        ).innerHTML = `${CONFIG.DEATH_PENALTY_MULTIPLIER} × ${deaths} × ${range_multiplier} = <span class="${deathPenaltyColor}">${deathPenalty}</span>`;
+        ).innerHTML = `${CONFIG.DEATH_PENALTY_MULTIPLIER} × ${deaths} × ${range_multiplier} × ${supportFactor} = <span class="${deathPenaltyColor}">${deathPenalty}</span>`;
         document.getElementById(
           'killReductionStep'
         ).innerHTML = `${kills} × ${CONFIG.KILL_REDUCTION_MULTIPLIER} = <span class="${killReductionColor}">${killReduction}</span>`;
